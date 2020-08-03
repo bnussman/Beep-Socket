@@ -1,0 +1,28 @@
+{
+  "name": "beep-socket",
+  "version": "1.0.0",
+  "description": "Socket.io Server for the Beep App now in Typescript",
+  "main": "build/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bnussman/Beep-Socket.git"
+  },
+  "author": "Banks Nussman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bnussman/Beep-Socket/issues"
+  },
+  "homepage": "https://github.com/bnussman/Beep-Socket#readme",
+  "dependencies": {
+    "rethinkdb": "^2.4.2",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/socket.io": "^2.1.10"
+  }
+}
