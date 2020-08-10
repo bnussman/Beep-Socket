@@ -7,6 +7,7 @@ import { Socket } from 'socket.io';
 const server = io();
 
 server.on("connection", function (socket: Socket) {
+    console.log(socket.id);
 
     socket.on('getRiderStatus', function (beepersID: string) {
 
@@ -19,8 +20,9 @@ server.on("connection", function (socket: Socket) {
                 server.to(socket.id).emit('updateRiderStatus');
             });
 
-            socket.on('stopGetRiderStatus', function() {
+            socket.on('stopGetRiderStatus', function stop() {
                 cursor.close();
+                socket.removeListener("stopGetRiderStatus", stop);
             });
 
         });
@@ -38,8 +40,9 @@ server.on("connection", function (socket: Socket) {
                 server.to(socket.id).emit('updateQueue');
             });
 
-            socket.on('stopGetQueue', function() {
+            socket.on('stopGetQueue', function stop() {
                 cursor.close();
+                socket.removeListener("stopGetQueue", stop);
             });
         });
 
