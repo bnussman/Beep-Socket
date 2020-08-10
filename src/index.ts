@@ -47,3 +47,4 @@ server.on("connection", function (socket: Socket) {
 });
 
 server.listen(3000);
+console.log("Running Beep Socket on 0.0.0.0:3000");
