@@ -9,10 +9,7 @@ const logger = new Logger();
 const server = io();
 
 server.on("connection", function (socket: Socket) {
-    console.log(socket.id);
-
     socket.on('getRiderStatus', function (beepersID: string) {
-
         r.table(beepersID).changes({squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
                 logger.error(error);
@@ -32,7 +29,6 @@ server.on("connection", function (socket: Socket) {
     });
 
     socket.on('getQueue', function (userid: string) {
-
         r.table(userid).changes({includeInitial: false, squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
                 logger.error(error);
