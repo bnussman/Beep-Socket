@@ -3,7 +3,9 @@ import { Cursor } from "rethinkdb";
 import { connQueues } from "./utils/db";
 import * as io from 'socket.io';
 import { Socket } from 'socket.io';
+import Logger from "beep-logger-client";
 
+const logger = new Logger();
 const server = io();
 
 server.on("connection", function (socket: Socket) {
@@ -13,7 +15,7 @@ server.on("connection", function (socket: Socket) {
 
         r.table(beepersID).changes({squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
-                throw error;
+                logger.error(error);
             }
 
             cursor.on("data", function() {
@@ -33,7 +35,7 @@ server.on("connection", function (socket: Socket) {
 
         r.table(userid).changes({includeInitial: false, squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
-                throw error;
+                logger.error(error);
             }
 
             cursor.on("data", function() {
