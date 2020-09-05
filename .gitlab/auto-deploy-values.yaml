@@ -1,0 +1,22 @@
+postgresql:
+  enabled: false
+  install: false
+service:
+  enabled: true
+  name: web
+  type: ClusterIP
+  url: https://ridebeep.app/socket.io
+  externalPort: 3001
+  internalPort: 3001
+livenessProbe:
+  path: "/socket.io"
+  initialDelaySeconds: 20
+  timeoutSeconds: 15
+  scheme: "HTTP"
+  probeType: "httpGet"
+readinessProbe:
+  path: "/socket.io"
+  initialDelaySeconds: 20
+  timeoutSeconds: 15
+  scheme: "HTTP"
+  probeType: "httpGet"
