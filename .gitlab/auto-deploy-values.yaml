@@ -13,10 +13,10 @@ livenessProbe:
   initialDelaySeconds: 20
   timeoutSeconds: 15
   scheme: "HTTP"
-  probeType: "httpGet"
+  probeType: "tcpSocket"
 readinessProbe:
   path: "/socket.io"
   initialDelaySeconds: 20
   timeoutSeconds: 15
   scheme: "HTTP"
-  probeType: "httpGet"
+  probeType: "tcpSocket"
