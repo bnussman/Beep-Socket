@@ -6,8 +6,8 @@ service:
   name: web
   type: ClusterIP
   url: https://ridebeep.app/socket.io
-  externalPort: 3001
-  internalPort: 3001
+  externalPort: 3000
+  internalPort: 3000
 livenessProbe:
   path: "/socket.io"
   initialDelaySeconds: 20
