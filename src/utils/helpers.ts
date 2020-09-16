@@ -31,6 +31,7 @@ export function formulateUserUpdateData(data: any) {
     const didPasswordChange: boolean = (data.old_val != null) && (data.new_val.password !== data.old_val?.password);
 
     return ({
+        id: data.new_val.id,
         first: data.new_val.first,
         last: data.new_val.last,
         email: data.new_val.email,
@@ -41,6 +42,7 @@ export function formulateUserUpdateData(data: any) {
         inQueueOfUserID: data.new_val.inQueueOfUserID,
         isBeeping: data.new_val.isBeeping,
         venmo: data.new_val.venmo,
+        userLevel: data.new_val.userLevel,
         isEmailVerified: data.new_val.isEmailVerified,
         isStudent: data.new_val.isStudent,
         didPasswordChange: didPasswordChange
