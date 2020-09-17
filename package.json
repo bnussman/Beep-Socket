@@ -22,7 +22,8 @@
     "author": "Banks Nussman",
     "license": "ISC",
     "dependencies": {
-        "beep-logger-client": "^1.0.1",
+        "@sentry/node": "^5.23.0",
+        "@sentry/tracing": "^5.23.0",
         "rethinkdb": "^2.4.2",
         "socket.io": "^2.3.0"
     },

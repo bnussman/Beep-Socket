@@ -3,10 +3,14 @@ import { Cursor } from "rethinkdb";
 import { conn, connQueues } from "./utils/db";
 import * as io from 'socket.io';
 import { Socket } from 'socket.io';
-import Logger from "beep-logger-client";
 import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
+import * as Sentry from "@sentry/node";
 
-const logger = new Logger();
+Sentry.init({
+  dsn: "https://c87c69706e25494182cc66be4cccdf86@sentry.nussman.us/3",
+  tracesSampleRate: 1.0,
+});
+
 const server = io();
 
 server.on("connection", function (socket: Socket) {
@@ -14,7 +18,7 @@ server.on("connection", function (socket: Socket) {
     socket.on('getRiderStatus', function (beepersID: string) {
         r.table(beepersID).changes({squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
-                logger.error(error);
+                Sentry.captureException(error);
             }
 
             cursor.on("data", function() {
@@ -33,7 +37,7 @@ server.on("connection", function (socket: Socket) {
     socket.on('getQueue', function (userid: string) {
         r.table(userid).changes({includeInitial: false, squash: true}).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
-                logger.error(error);
+                Sentry.captureException(error);
             }
 
             cursor.on("data", function() {
@@ -62,7 +66,7 @@ server.on("connection", function (socket: Socket) {
         //@ts-ignore
         r.table("users").get(userid).changes({includeInitial: true, squash: true}).run(conn, function(error: Error, cursor: any) {
             if (error) {
-                logger.error(error);
+                Sentry.captureException(error);
             }
 
             cursor.on("data", function(data: any) {

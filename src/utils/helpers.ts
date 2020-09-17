@@ -1,5 +1,6 @@
 import { conn } from "./db";
 import * as r from "rethinkdb";
+import * as Sentry from "@sentry/node";
 
 /**
  * Retuns user's id if their token is valid, null otherwise
@@ -21,7 +22,7 @@ export async function isTokenValid(token: string): Promise<string | null> {
         //rather then returning a userid, return null to signify that token is not valid.
     }
     catch (error) {
-        console.error(error);
+        Sentry.captureException(error);
     }
 
     return null;
