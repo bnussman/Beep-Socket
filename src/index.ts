@@ -14,17 +14,23 @@ initializeSentry();
 
 server.on("connection", function (socket: Socket) {
 
+    let isBeeping = false;
+    let isInRide = false;
+
     socket.on('getRiderStatus', function (beepersID: string) {
         r.table(beepersID).changes({ squash: true }).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
+           
+            isInRide = true;
 
             cursor.on("data", function() {
                 server.to(socket.id).emit('updateRiderStatus');
             });
 
             socket.on('stopGetRiderStatus', function stop() {
+                isInRide = false;
                 cursor.close();
                 socket.removeListener("stopGetRiderStatus", stop);
             });
@@ -33,21 +39,32 @@ server.on("connection", function (socket: Socket) {
 
     });
 
+    socket.on('isInRide', function () {
+        server.to(socket.id).emit("isInRideData", String(isInRide));
+    });
+
     socket.on('getQueue', function (userid: string) {
         r.table(userid).changes({ includeInitial: false, squash: true }).run(connQueues, function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
 
+            isBeeping = true;
+
             cursor.on("data", function() {
                 server.to(socket.id).emit('updateQueue');
             });
 
             socket.on('stopGetQueue', function stop() {
+                isBeeping = false;
                 cursor.close();
                 socket.removeListener("stopGetQueue", stop);
             });
         });
+    });
+
+    socket.on('isBeeping', function () {
+        server.to(socket.id).emit("isBeepingData", String(isBeeping));
     });
 
     socket.on('getUser', async function (authtoken: string) {
