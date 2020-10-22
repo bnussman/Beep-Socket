@@ -16,6 +16,7 @@ server.on("connection", function (socket: Socket) {
 
     let isBeeping = false;
     let isInRide = false;
+    let isGettingUser = false;
 
     socket.on('getRiderStatus', function (beepersID: string) {
         r.table(beepersID).changes({ squash: true }).run(connQueues, function(error: Error, cursor: Cursor) {
@@ -82,15 +83,22 @@ server.on("connection", function (socket: Socket) {
                 Sentry.captureException(error);
             }
 
+            isGettingUser = true;
+
             cursor.on("data", function(data: any) {
                 server.to(socket.id).emit('updateUser', formulateUserUpdateData(data));
             });
 
             socket.on('stopGetUser', function stop() {
+                isGettingUser = false;
                 cursor.close();
                 socket.removeListener("stopGetUser", stop);
             });
         });
+    });
+
+    socket.on('isGettingUser', function () {
+        server.to(socket.id).emit("isGettingUserData", String(isGettingUser));
     });
 });
 
