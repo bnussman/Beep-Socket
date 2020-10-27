@@ -12,6 +12,7 @@ const server = io();
 
 initializeSentry();
 
+
 server.on("connection", function (socket: Socket) {
 
     let isBeeping = false;
