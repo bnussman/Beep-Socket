@@ -47,6 +47,7 @@ export function formulateUserUpdateData(data: any) {
         isEmailVerified: data.new_val.isEmailVerified,
         isStudent: data.new_val.isStudent,
         didPasswordChange: didPasswordChange,
-        masksRequired: data.new_val.masksRequired
+        masksRequired: data.new_val.masksRequired,
+        photoUrl: data.new_val.photoUrl
     });
 }
