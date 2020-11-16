@@ -2,11 +2,11 @@ import * as r from "rethinkdb";
 import * as io from 'socket.io';
 import * as Sentry from "@sentry/node";
 import { Cursor } from "rethinkdb";
-import { conn, connQueues } from "./utils/db";
 import { Socket } from 'socket.io';
 import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
+import database from "./utils/db";
 
 const server = io();
 
@@ -18,8 +18,8 @@ server.on("connection", function (socket: Socket) {
     let isInRide = false;
     let isGettingUser = false;
 
-    socket.on('getRiderStatus', function (beepersID: string) {
-        r.table(beepersID).changes({ squash: true }).run(connQueues, function(error: Error, cursor: Cursor) {
+    socket.on('getRiderStatus', async function (beepersID: string) {
+        r.table(beepersID).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
@@ -44,8 +44,8 @@ server.on("connection", function (socket: Socket) {
         server.to(socket.id).emit("isInRideData", String(isInRide));
     });
 
-    socket.on('getQueue', function (userid: string) {
-        r.table(userid).changes({ includeInitial: false, squash: true }).run(connQueues, function(error: Error, cursor: Cursor) {
+    socket.on('getQueue', async function (userid: string) {
+        r.table(userid).changes({ includeInitial: false, squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
@@ -78,7 +78,7 @@ server.on("connection", function (socket: Socket) {
         }
 
         //@ts-ignore
-        r.table("users").get(userid).changes({ includeInitial: true, squash: true }).run(conn, function(error: Error, cursor: any) {
+        r.table("users").get(userid).changes({ includeInitial: true, squash: true }).run((await database.getConn()), function(error: Error, cursor: any) {
             if (error) {
                 Sentry.captureException(error);
             }
@@ -102,5 +102,7 @@ server.on("connection", function (socket: Socket) {
     });
 });
 
-server.listen(3000);
-console.log("Running Beep Socket on http://0.0.0.0:3000");
+database.connect(() => {
+    server.listen(3000);
+    console.log("Running Beep Socket on http://0.0.0.0:3000");
+});

@@ -1,4 +1,4 @@
-import { conn } from "./db";
+import database from "./db";
 import * as r from "rethinkdb";
 import * as Sentry from "@sentry/node";
 
@@ -12,7 +12,7 @@ export async function isTokenValid(token: string): Promise<string | null> {
     //get (only) user's id from tokens db where the token is the token passed to this function
     //NOTE: filter must be used over get here because token is not a primary (or secondary) key
     try {
-        const result: any = await r.table("tokens").get(token).run(conn);
+        const result: any = await r.table("tokens").get(token).run((await database.getConn()));
 
         if (result) {
             return result.userid;
