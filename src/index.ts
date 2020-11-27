@@ -35,9 +35,7 @@ server.on("connection", function (socket: Socket) {
                 cursor.close();
                 socket.removeListener("stopGetRiderStatus", stop);
             });
-
         });
-
     });
 
     socket.on('isInRide', function () {

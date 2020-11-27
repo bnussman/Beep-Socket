@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/node";
  * @return userid if token is valid, null otherwise
  */
 export async function isTokenValid(token: string): Promise<string | null> {
+    if (token == null) return null;
     //get (only) user's id from tokens db where the token is the token passed to this function
     //NOTE: filter must be used over get here because token is not a primary (or secondary) key
     try {
