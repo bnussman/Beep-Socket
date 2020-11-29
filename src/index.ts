@@ -1,14 +1,13 @@
+import { Server, Socket } from "socket.io";
 import * as r from "rethinkdb";
-import * as io from 'socket.io';
 import * as Sentry from "@sentry/node";
 import { Cursor } from "rethinkdb";
-import { Socket } from 'socket.io';
 import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
 import database from "./utils/db";
 
-const server = io();
+const server = new Server();
 
 initializeSentry();
 
