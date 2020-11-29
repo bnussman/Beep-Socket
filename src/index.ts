@@ -13,32 +13,21 @@ initializeSentry();
 
 server.on("connection", function (socket: Socket) {
 
-    let isBeeping = false;
-    let isInRide = false;
-    let isGettingUser = false;
-
     socket.on('getRiderStatus', async function (beepersID: string) {
         r.table(beepersID).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
            
-            isInRide = true;
-
             cursor.on("data", function() {
                 server.to(socket.id).emit('updateRiderStatus');
             });
 
             socket.on('stopGetRiderStatus', function stop() {
-                isInRide = false;
                 cursor.close();
                 socket.removeListener("stopGetRiderStatus", stop);
             });
         });
-    });
-
-    socket.on('isInRide', function () {
-        server.to(socket.id).emit("isInRideData", String(isInRide));
     });
 
     socket.on('getQueue', async function (userid: string) {
@@ -47,22 +36,15 @@ server.on("connection", function (socket: Socket) {
                 Sentry.captureException(error);
             }
 
-            isBeeping = true;
-
             cursor.on("data", function() {
                 server.to(socket.id).emit('updateQueue');
             });
 
             socket.on('stopGetQueue', function stop() {
-                isBeeping = false;
                 cursor.close();
                 socket.removeListener("stopGetQueue", stop);
             });
         });
-    });
-
-    socket.on('isBeeping', function () {
-        server.to(socket.id).emit("isBeepingData", String(isBeeping));
     });
 
     socket.on('getUser', async function (authtoken: string) {
@@ -80,22 +62,15 @@ server.on("connection", function (socket: Socket) {
                 Sentry.captureException(error);
             }
 
-            isGettingUser = true;
-
             cursor.on("data", function(data: any) {
                 server.to(socket.id).emit('updateUser', formulateUserUpdateData(data));
             });
 
             socket.on('stopGetUser', function stop() {
-                isGettingUser = false;
                 cursor.close();
                 socket.removeListener("stopGetUser", stop);
             });
         });
-    });
-
-    socket.on('isGettingUser', function () {
-        server.to(socket.id).emit("isGettingUserData", String(isGettingUser));
     });
 });
 
