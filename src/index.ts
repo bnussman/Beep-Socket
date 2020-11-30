@@ -7,7 +7,12 @@ import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
 import database from "./utils/db";
 
-const server = new Server();
+const server = new Server({
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 initializeSentry();
 
