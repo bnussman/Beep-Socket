@@ -80,6 +80,24 @@ server.on("connection", function (socket: Socket) {
             return console.log("Token is not valid. Just skipping this entry attempt");
         }
 
+        location = { ...location, timestamp: Date.now() };
+
+        try {
+            const result = await r.db('beepLocations').tableCreate(userid).run((await database.getConnLocations()));
+            console.log("Create Table", result);
+        }
+        catch (error) {
+            console.log(error);
+        }
+
+        try {
+            const result: r.WriteResult = await r.table(userid).insert(location).run((await database.getConnLocations()));
+            console.log("Insert Result", result);
+        } 
+        catch (error) {
+            console.log(error);
+        }
+
         console.log("User's ID", userid); 
         console.log("Location", location); 
     });
