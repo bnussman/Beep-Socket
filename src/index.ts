@@ -47,9 +47,9 @@ server.on("connection", function (socket: Socket) {
         });
     });
 
-    socket.on('getUser', async function (authtoken: string) {
+    socket.on('getUser', async function (authToken: string) {
 
-        const userid = await isTokenValid(authtoken);
+        const userid = await isTokenValid(authToken);
 
         if (!userid) {
             server.to(socket.id).emit('updateUser', makeJSONError("Your token is not valid."));
@@ -71,6 +71,17 @@ server.on("connection", function (socket: Socket) {
                 socket.removeListener("stopGetUser", stop);
             });
         });
+    });
+
+    socket.on('updateUsersLocation', async function (authToken: string, location: any) {
+        const userid = await isTokenValid(authToken);
+
+        if (!userid) {
+            return console.log("Token is not valid. Just skipping this entry attempt");
+        }
+
+        console.log("User's ID", userid); 
+        console.log("Location", location); 
     });
 });
 
