@@ -28,6 +28,21 @@ server.on("connection", function (socket: Socket) {
                 socket.removeListener("stopGetRiderStatus", stop);
             });
         });
+
+        r.table(beepersID).orderBy(r.desc('timestamp')).limit(1).changes({ squash: true }).run((await database.getConnLocations()), function(error: Error, cursor: Cursor) {
+            if (error) {
+                Sentry.captureException(error);
+            }
+           
+            cursor.on("data", async function() {
+                server.to(socket.id).emit((await cursor.next()));
+            });
+
+            socket.on('stopGetRiderStatus', function stop() {
+                cursor.close();
+                socket.removeListener("stopGetRiderStatus", stop);
+            });
+        });
     });
 
     socket.on('getQueue', async function (userid: string) {
