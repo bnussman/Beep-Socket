@@ -73,33 +73,37 @@ server.on("connection", function (socket: Socket) {
         });
     });
 
-    socket.on('updateUsersLocation', async function (authToken: string, location: any) {
+    socket.on('updateUsersLocation', async function (authToken: string, latitude: number, longitude: number, altitude: number, accuracy: number, altitudeAccuracy: number, heading: number, speed: number) {
         const userid = await isTokenValid(authToken);
 
         if (!userid) {
             return console.log("Token is not valid. Just skipping this entry attempt");
         }
 
-        location = { ...location, timestamp: Date.now() };
+        const dataToInsert = {
+            latitude: latitude,
+            longitude: longitude,
+            altitude: altitude,
+            accuracy: accuracy,
+            altitudeAccuracy: altitudeAccuracy,
+            heading: heading,
+            speed: speed,
+            timestamp: Date.now()
+        };
 
         try {
-            const result = await r.db('beepLocations').tableCreate(userid).run((await database.getConnLocations()));
-            console.log("Create Table", result);
+            await r.db('beepLocations').tableCreate(userid).run((await database.getConnLocations()));
         }
-        catch (error) {
-            console.log(error);
+        catch (e) {
+
         }
 
         try {
-            const result: r.WriteResult = await r.table(userid).insert(location).run((await database.getConnLocations()));
-            console.log("Insert Result", result);
+            const result: r.WriteResult = await r.table(userid).insert(dataToInsert).run((await database.getConnLocations()));
         } 
         catch (error) {
             console.log(error);
         }
-
-        console.log("User's ID", userid); 
-        console.log("Location", location); 
     });
 });
 
