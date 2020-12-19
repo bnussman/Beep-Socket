@@ -34,7 +34,7 @@ server.on("connection", function (socket: Socket) {
 
 
         //TODO: rider must athenticate. Also, the rider must be acceprted to get this data. This is very confidential.
-        r.table(beepersID).changes().run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
+        r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
                 console.log(error);
