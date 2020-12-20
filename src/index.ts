@@ -13,16 +13,17 @@ initializeSentry();
 
 server.on("connection", function (socket: Socket) {
 
-    socket.on('getRiderStatus', async function (beepersID: string) {
+    socket.on('getRiderStatus', async function (beepersID: string, ridersID: string) {
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table(beepersID).filter({ riderid: ridersID }).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
            
-            cursor.on("data", function() {
-                server.to(socket.id).emit('updateRiderStatus');
+            cursor.on("data", function(queueData) {
+                console.log(queueData.new_val);
+                server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
             });
 
             socket.on('stopGetRiderStatus', function stop() {
