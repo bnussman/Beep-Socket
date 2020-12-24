@@ -3,7 +3,7 @@ import * as Tracing from "@sentry/tracing";
 
 export function initializeSentry(): void {
     Sentry.init({
-        dsn: process.env.SENTRY_URL || "http://a0553a7fab6040b193c574c246f8eafc@192.168.1.124:9000/3",
+        dsn: process.env.SENTRY_URL || "https://f8d119dccd214f13ada901136f2f5e61@sentry.nussman.us/3",
         environment: process.env.GITLAB_ENVIRONMENT_NAME || "development",
         tracesSampleRate: 1.0
     });
