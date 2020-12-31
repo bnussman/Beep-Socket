@@ -13,17 +13,42 @@ initializeSentry();
 
 server.on("connection", function (socket: Socket) {
 
-    socket.on('getRiderStatus', async function (beepersID: string, ridersID: string) {
+    socket.on('getRiderStatus', async function (authToken: string, beepersID: string) {
+        const userid = await isTokenValid(authToken);
+
+        if (!userid) {
+            server.to(socket.id).emit('updateRiderStatus', makeJSONError("Your token is not valid."));
+            return;
+        }
+
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).filter({ riderid: ridersID }).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table(beepersID).filter({ riderid: userid }).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
            
-            cursor.on("data", function(queueData) {
+            cursor.on("data", async function(queueData) {
                 console.log(queueData.new_val);
                 server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
+                if (queueData.new_val.isAccepted && queueData.new_val.state == 1) {
+
+                    r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
+                        if (error) {
+                            Sentry.captureException(error);
+                            console.log(error);
+                        }
+                        locationCursor = cursor;
+
+                        cursor.on("data", async function(locationValue) {
+                            server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
+                        });
+                    });
+
+                }
+                else {
+                    if (locationCursor) locationCursor.close();
+                }
             });
 
             socket.on('stopGetRiderStatus', function stop() {
@@ -34,18 +59,6 @@ server.on("connection", function (socket: Socket) {
         });
 
 
-        //TODO: rider must athenticate. Also, the rider must be acceprted to get this data. This is very confidential.
-        r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
-            if (error) {
-                Sentry.captureException(error);
-                console.log(error);
-            }
-            locationCursor = cursor;
-
-            cursor.on("data", async function(locationValue) {
-                server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
-            });
-        });
     });
 
     socket.on('getQueue', async function (userid: string) {
