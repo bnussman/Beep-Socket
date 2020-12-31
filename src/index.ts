@@ -29,9 +29,10 @@ server.on("connection", function (socket: Socket) {
             }
            
             cursor.on("data", async function(queueData) {
-                console.log(queueData.new_val);
+
                 server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
-                if (queueData.new_val.isAccepted && queueData.new_val.state == 1) {
+
+                if (queueData.new_val && queueData.new_val.isAccepted && (queueData.new_val.state == 1)) {
 
                     r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
                         if (error) {
@@ -131,6 +132,11 @@ server.on("connection", function (socket: Socket) {
 
         try {
             const result: r.WriteResult = await r.table(userid).insert(dataToInsert).run((await database.getConnLocations()));
+            console.log(result);
+
+            if (result.inserted > 0) {
+                console.log(userid, "location update", dataToInsert);
+            }
         } 
         catch (error) {
             console.log(error);
