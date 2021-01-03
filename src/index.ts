@@ -23,7 +23,7 @@ server.on("connection", function (socket: Socket) {
 
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).filter({ riderid: userid }).changes({ squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table(beepersID).filter({ riderid: userid }).changes({ includeInitial: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
@@ -39,9 +39,11 @@ server.on("connection", function (socket: Socket) {
                             Sentry.captureException(error);
                             console.log(error);
                         }
+
                         locationCursor = cursor;
 
                         cursor.on("data", async function(locationValue) {
+                            console.log("Pushing Location update to riders:", locationValue.new_val);
                             server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
                         });
                     });
