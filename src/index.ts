@@ -23,13 +23,13 @@ server.on("connection", function (socket: Socket) {
 
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).filter({ riderid: userid }).changes({ includeInitial: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table(beepersID).changes({ includeInitial: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
            
-            cursor.on("data", async function(queueData) {
-                server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
+            cursor.on("data", async function() {
+                server.to(socket.id).emit('updateRiderStatus');
             });
 
             socket.on('stopGetRiderStatus', function stop() {
