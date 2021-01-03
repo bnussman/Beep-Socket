@@ -32,6 +32,8 @@ server.on("connection", function (socket: Socket) {
 
                 server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
 
+                console.log(queueData);
+
                 if (queueData.new_val && queueData.new_val.isAccepted && (queueData.new_val.state == 1)) {
 
                     r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
