@@ -23,7 +23,7 @@ server.on("connection", function (socket: Socket) {
 
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).changes({ includeInitial: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
             }
