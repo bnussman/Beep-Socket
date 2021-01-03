@@ -35,8 +35,9 @@ server.on("connection", function (socket: Socket) {
                 console.log(queueData);
 
                 if (queueData.new_val && queueData.new_val.isAccepted && (queueData.new_val.state == 1)) {
+                    console.log("case is true");
 
-                    r.table(beepersID).changes({ includeInitial: true }).limit(1).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
+                    r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
                         if (error) {
                             Sentry.captureException(error);
                             console.log(error);
