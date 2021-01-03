@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import * as r from "rethinkdb";
 import * as Sentry from "@sentry/node";
 import { Cursor } from "rethinkdb";
-import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
+import { isTokenValid, formulateUserUpdateData, getUsersCurrentLocation } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
 import database from "./utils/db";
@@ -29,32 +29,7 @@ server.on("connection", function (socket: Socket) {
             }
            
             cursor.on("data", async function(queueData) {
-
                 server.to(socket.id).emit('updateRiderStatus', queueData.new_val);
-
-                console.log(queueData);
-
-                if (queueData.new_val && queueData.new_val.isAccepted && (queueData.new_val.state == 1)) {
-                    console.log("case is true");
-
-                    r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
-                        if (error) {
-                            Sentry.captureException(error);
-                            console.log(error);
-                        }
-
-                        locationCursor = cursor;
-
-                        cursor.on("data", async function(locationValue) {
-                            console.log("Pushing Location update to riders:", locationValue.new_val);
-                            server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
-                        });
-                    });
-
-                }
-                else {
-                    if (locationCursor) locationCursor.close();
-                }
             });
 
             socket.on('stopGetRiderStatus', function stop() {
@@ -64,7 +39,22 @@ server.on("connection", function (socket: Socket) {
             });
         });
 
+        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
+            if (error) {
+                Sentry.captureException(error);
+                console.log(error);
+            }
 
+            locationCursor = cursor;
+
+            cursor.on("data", async function(locationValue) {
+                console.log("Pushing Location update to riders:", locationValue.new_val);
+                server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
+            });
+
+            const initalLocation = await getUsersCurrentLocation(beepersID);
+            server.to(socket.id).emit('hereIsBeepersLocation', initalLocation);
+        });
     });
 
     socket.on('getQueue', async function (userid: string) {
@@ -129,21 +119,13 @@ server.on("connection", function (socket: Socket) {
         };
 
         try {
-            await r.db('beepLocations').tableCreate(userid).run((await database.getConnLocations()));
-        }
-        catch (e) {
-
-        }
-
-        try {
             const result: r.WriteResult = await r.table(userid).insert(dataToInsert).run((await database.getConnLocations()));
-            console.log(result);
-
             if (result.inserted > 0) {
-                console.log(userid, "location update", dataToInsert);
+                console.log("Beeper", userid, "inserted a location update!");
             }
         } 
         catch (error) {
+            Sentry.captureException(error);
             console.log(error);
         }
     });
