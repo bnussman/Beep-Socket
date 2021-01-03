@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import * as r from "rethinkdb";
 import * as Sentry from "@sentry/node";
 import { Cursor } from "rethinkdb";
-import { isTokenValid, formulateUserUpdateData, getUsersCurrentLocation } from "./utils/helpers";
+import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
 import database from "./utils/db";
@@ -51,9 +51,6 @@ server.on("connection", function (socket: Socket) {
                 console.log("Pushing Location update to riders:", locationValue.new_val);
                 server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
             });
-
-            //const initalLocation = await getUsersCurrentLocation(beepersID);
-            //server.to(socket.id).emit('hereIsBeepersLocation', initalLocation);
         });
     });
 

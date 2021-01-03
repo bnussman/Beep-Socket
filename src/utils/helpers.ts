@@ -2,12 +2,6 @@ import database from "./db";
 import * as r from "rethinkdb";
 import * as Sentry from "@sentry/node";
 
-export async function getUsersCurrentLocation(id: string): Promise<any> {
-    const result = await r.table(id).orderBy(r.desc('timestamp')).limit(1).run((await database.getConnLocations()));
-
-    return (await result.next());
-}
-
 /**
  * Retuns user's id if their token is valid, null otherwise
  *
