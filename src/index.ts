@@ -52,8 +52,8 @@ server.on("connection", function (socket: Socket) {
                 server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
             });
 
-            const initalLocation = await getUsersCurrentLocation(beepersID);
-            server.to(socket.id).emit('hereIsBeepersLocation', initalLocation);
+            //const initalLocation = await getUsersCurrentLocation(beepersID);
+            //server.to(socket.id).emit('hereIsBeepersLocation', initalLocation);
         });
     });
 
