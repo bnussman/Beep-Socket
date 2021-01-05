@@ -21,6 +21,11 @@ server.on("connection", function (socket: Socket) {
             return;
         }
 
+        if (!beepersID) {
+            server.to(socket.id).emit('updateRiderStatus', makeJSONError("You did not provide a beeper's id"));
+            return;
+        }
+
         let locationCursor: Cursor | null;
 
         r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
