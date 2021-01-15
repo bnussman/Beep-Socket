@@ -42,6 +42,10 @@ server.on("connection", function (socket: Socket) {
                 if (locationCursor) locationCursor.close();
                 socket.removeListener("stopGetRiderStatus", stop);
             });
+
+            socket.on("disconnect", () => {
+                cursor.close();
+            });
         });
 
         r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
@@ -55,6 +59,10 @@ server.on("connection", function (socket: Socket) {
             cursor.on("data", async function(locationValue) {
                 console.log("Pushing Location update to riders:", locationValue.new_val);
                 server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
+            });
+
+            socket.on("disconnect", () => {
+                cursor.close();
             });
         });
     });
@@ -72,6 +80,10 @@ server.on("connection", function (socket: Socket) {
             socket.on('stopGetQueue', function stop() {
                 cursor.close();
                 socket.removeListener("stopGetQueue", stop);
+            });
+
+            socket.on("disconnect", () => {
+                cursor.close();
             });
         });
     });
@@ -98,6 +110,11 @@ server.on("connection", function (socket: Socket) {
             socket.on('stopGetUser', function stop() {
                 cursor.close();
                 socket.removeListener("stopGetUser", stop);
+            });
+
+            socket.on("disconnect", () => {
+                cursor.close();
+                console.log("User", userid, "disconnected. Closing all RethinkDB Cursors for user!");
             });
         });
     });
