@@ -30,6 +30,11 @@ export async function isTokenValid(token: string): Promise<string | null> {
 }
 
 export function formulateUserUpdateData(data: any) {
+    if (data.new_val == null) {
+        console.log("User account was probably deleted.");
+        return null;
+    }
+
     const didPasswordChange: boolean = (data.old_val != null) && (data.new_val.password !== data.old_val?.password);
 
     return ({
