@@ -1,18 +1,16 @@
 import { Server, Socket } from "socket.io";
-import * as r from "rethinkdb";
 import * as Sentry from "@sentry/node";
-import { Cursor } from "rethinkdb";
 import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
-import database from "./utils/db";
+import db from "./utils/db";
+import {ObjectId} from "mongodb";
 
 const server = new Server();
 
 initializeSentry();
 
 server.on("connection", function (socket: Socket) {
-
     socket.on('getRiderStatus', async function (authToken: string, beepersID: string) {
         const userid = await isTokenValid(authToken);
 
@@ -26,28 +24,27 @@ server.on("connection", function (socket: Socket) {
             return;
         }
 
-        let locationCursor: Cursor | null;
+        //let locationCursor: Cursor | null;
+        const filter = [{ $match: {'fullDocument.rider': userid } }];
+        //const stream = db.beep().collection('queue-entry').watch(filter);
+        const stream = db.beep().collection('queue-entry').watch(filter, { fullDocument: 'updateLookup' });
 
-        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
-            if (error) {
-                Sentry.captureException(error);
-            }
-           
-            cursor.on("data", async function() {
-                server.to(socket.id).emit('updateRiderStatus');
-            });
+        stream.on("change", (changeEvent) => {
+            console.log(changeEvent);
+
+            server.to(socket.id).emit("updateRiderStatus");
 
             socket.on('stopGetRiderStatus', function stop() {
-                cursor.close();
-                if (locationCursor) locationCursor.close();
+                stream.close();
                 socket.removeListener("stopGetRiderStatus", stop);
             });
 
             socket.on("disconnect", () => {
-                cursor.close();
+                stream.close();
             });
         });
 
+        /*
         r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
@@ -65,25 +62,26 @@ server.on("connection", function (socket: Socket) {
                 cursor.close();
             });
         });
+        */
     });
 
     socket.on('getQueue', async function (userid: string) {
-        r.table(userid).changes({ includeInitial: false, squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
-            if (error) {
-                Sentry.captureException(error);
-            }
+        const filter = [{ $match: {'fullDocument.beeper': new ObjectId(userid) } }];
+        //const stream = db.beep().collection('queue-entry').watch(filter);
+        const stream = db.beep().collection('queue-entry').watch(filter, { fullDocument: 'updateLookup' });
 
-            cursor.on("data", function() {
-                server.to(socket.id).emit('updateQueue');
-            });
+        stream.on("change", (changeEvent) => {
+            console.log(changeEvent);
+
+            server.to(socket.id).emit("updateQueue");
 
             socket.on('stopGetQueue', function stop() {
-                cursor.close();
+                stream.close();
                 socket.removeListener("stopGetQueue", stop);
             });
 
             socket.on("disconnect", () => {
-                cursor.close();
+                stream.close();
             });
         });
     });
@@ -97,28 +95,26 @@ server.on("connection", function (socket: Socket) {
             return;
         }
 
-        //@ts-ignore
-        r.table("users").get(userid).changes({ includeInitial: true, squash: true }).run((await database.getConn()), function(error: Error, cursor: any) {
-            if (error) {
-                Sentry.captureException(error);
-            }
+        const filter = [{ $match: { "fullDocument._id": userid}  }];
+        const stream = db.beep().collection('user').watch(filter, { fullDocument: 'updateLookup' });
 
-            cursor.on("data", function(data: any) {
-                server.to(socket.id).emit('updateUser', formulateUserUpdateData(data));
-            });
+        stream.on("change", (changeEvent) => {
+            console.log("user update", changeEvent);
+            //@ts-ignore
+            server.to(socket.id).emit('updateUser', formulateUserUpdateData(changeEvent));
 
-            socket.on('stopGetUser', function stop() {
-                cursor.close();
-                socket.removeListener("stopGetUser", stop);
+            socket.on('stopGetQueue', function stop() {
+                stream.close();
+                socket.removeListener("stopGetQueue", stop);
             });
 
             socket.on("disconnect", () => {
-                cursor.close();
-                console.log("User", userid, "disconnected. Closing all RethinkDB Cursors for user!");
+                stream.close();
             });
         });
-    });
 
+    });
+    /*
     socket.on('updateUsersLocation', async function (authToken: string, latitude: number, longitude: number, altitude: number, accuracy: number, altitudeAccuracy: number, heading: number, speed: number) {
         const userid = await isTokenValid(authToken);
 
@@ -148,9 +144,9 @@ server.on("connection", function (socket: Socket) {
             console.log(error);
         }
     });
+    */
 });
-
-database.connect(() => {
+db.connect(() => {
     server.listen(3000);
     console.log("Running Beep Socket on http://0.0.0.0:3000");
 });
