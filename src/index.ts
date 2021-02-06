@@ -99,13 +99,17 @@ server.on("connection", function (socket: Socket) {
         const stream = db.beep().collection('user').watch(filter, { fullDocument: 'updateLookup' });
 
         stream.on("change", (changeEvent) => {
-            console.log("user update", changeEvent);
             //@ts-ignore
-            server.to(socket.id).emit('updateUser', formulateUserUpdateData(changeEvent));
+            if (changeEvent.updateDescription?.updatedFields) {
+                //@ts-ignore
+                console.log(userid, changeEvent.updateDescription.updatedFields);
+                //@ts-ignore
+                server.to(socket.id).emit('updateUser', changeEvent.updateDescription.updatedFields);
+            }
 
-            socket.on('stopGetQueue', function stop() {
+            socket.on('stopGetUser', function stop() {
                 stream.close();
-                socket.removeListener("stopGetQueue", stop);
+                socket.removeListener("stopGetUser", stop);
             });
 
             socket.on("disconnect", () => {
@@ -114,7 +118,7 @@ server.on("connection", function (socket: Socket) {
         });
 
     });
-    /*
+
     socket.on('updateUsersLocation', async function (authToken: string, latitude: number, longitude: number, altitude: number, accuracy: number, altitudeAccuracy: number, heading: number, speed: number) {
         const userid = await isTokenValid(authToken);
 
@@ -123,6 +127,7 @@ server.on("connection", function (socket: Socket) {
         }
 
         const dataToInsert = {
+            user: new ObjectId(userid),
             latitude: latitude,
             longitude: longitude,
             altitude: altitude,
@@ -134,18 +139,16 @@ server.on("connection", function (socket: Socket) {
         };
 
         try {
-            const result: r.WriteResult = await r.table(userid).insert(dataToInsert).run((await database.getConnLocations()));
-            if (result.inserted > 0) {
-                console.log("Beeper", userid, "inserted a location update!");
-            }
+            db.beep().collection("location").insertOne(dataToInsert);
         } 
         catch (error) {
             Sentry.captureException(error);
             console.log(error);
         }
     });
-    */
 });
+
+
 db.connect(() => {
     server.listen(3000);
     console.log("Running Beep Socket on http://0.0.0.0:3000");
