@@ -24,45 +24,41 @@ server.on("connection", function (socket: Socket) {
             return;
         }
 
-        //let locationCursor: Cursor | null;
-        const filter = [{ $match: {'fullDocument.rider': userid } }];
-        //const stream = db.beep().collection('queue-entry').watch(filter);
+        const filter = [{ $match: {'fullDocument.beeper': new ObjectId(beepersID) } }];
         const stream = db.beep().collection('queue-entry').watch(filter, { fullDocument: 'updateLookup' });
 
         stream.on("change", (changeEvent) => {
-            console.log(changeEvent);
-
             server.to(socket.id).emit("updateRiderStatus");
+            console.log("Rider Update", userid);
 
-            socket.on('stopGetRiderStatus', function stop() {
-                stream.close();
-                socket.removeListener("stopGetRiderStatus", stop);
-            });
-
-            socket.on("disconnect", () => {
-                stream.close();
-            });
         });
 
-        /*
-        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
-            if (error) {
-                Sentry.captureException(error);
-                console.log(error);
-            }
-
-            locationCursor = cursor;
-
-            cursor.on("data", async function(locationValue) {
-                console.log("Pushing Location update to riders:", locationValue.new_val);
-                server.to(socket.id).emit('hereIsBeepersLocation', locationValue.new_val);
-            });
-
-            socket.on("disconnect", () => {
-                cursor.close();
-            });
+        socket.on('stopGetRiderStatus', function stop() {
+            stream.close();
         });
-        */
+
+        socket.on("disconnect", () => {
+            stream.close();
+            socket.removeAllListeners();
+        });
+
+        const filter2 = [{ $match: {'fullDocument.user': userid } }];
+        const stream2 = db.beep().collection('queue-entry').watch(filter2, { fullDocument: 'updateLookup' });
+
+        stream2.on("change", (changeEvent) => {
+            //@ts-ignore
+            server.to(socket.id).emit("hereIsBeepersLocation", changeEvent.fullDocument);
+
+        });
+
+        socket.on('stopGetRiderStatus', function stop() {
+            stream2.close();
+        });
+
+        socket.on("disconnect", () => {
+            stream2.close();
+            socket.removeAllListeners();
+        });
     });
 
     socket.on('getQueue', async function (userid: string) {
@@ -71,18 +67,18 @@ server.on("connection", function (socket: Socket) {
         const stream = db.beep().collection('queue-entry').watch(filter, { fullDocument: 'updateLookup' });
 
         stream.on("change", (changeEvent) => {
-            console.log(changeEvent);
 
             server.to(socket.id).emit("updateQueue");
 
-            socket.on('stopGetQueue', function stop() {
-                stream.close();
-                socket.removeListener("stopGetQueue", stop);
-            });
+        });
 
-            socket.on("disconnect", () => {
-                stream.close();
-            });
+        socket.on('stopGetQueue', function stop() {
+            stream.close();
+        });
+
+        socket.on("disconnect", () => {
+            stream.close();
+            socket.removeAllListeners();
         });
     });
 
@@ -102,21 +98,21 @@ server.on("connection", function (socket: Socket) {
             //@ts-ignore
             if (changeEvent.updateDescription?.updatedFields) {
                 //@ts-ignore
-                console.log(userid, changeEvent.updateDescription.updatedFields);
+                console.log("User Profile Update", userid, changeEvent.updateDescription.updatedFields);
                 //@ts-ignore
                 server.to(socket.id).emit('updateUser', changeEvent.updateDescription.updatedFields);
             }
 
-            socket.on('stopGetUser', function stop() {
-                stream.close();
-                socket.removeListener("stopGetUser", stop);
-            });
-
-            socket.on("disconnect", () => {
-                stream.close();
-            });
         });
 
+        socket.on('stopGetUser', function stop() {
+            stream.close();
+        });
+
+        socket.on("disconnect", () => {
+            stream.close();
+            socket.removeAllListeners();
+        });
     });
 
     socket.on('updateUsersLocation', async function (authToken: string, latitude: number, longitude: number, altitude: number, accuracy: number, altitudeAccuracy: number, heading: number, speed: number) {
