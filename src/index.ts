@@ -100,7 +100,10 @@ server.on("connection", function (socket: Socket) {
                 //@ts-ignore
                 console.log("User Profile Update", userid, changeEvent.updateDescription.updatedFields);
                 //@ts-ignore
-                server.to(socket.id).emit('updateUser', changeEvent.updateDescription.updatedFields);
+                if (!changeEvent.updateDescription.updatedFields.password) {
+                    //@ts-ignore
+                    server.to(socket.id).emit('updateUser', changeEvent.updateDescription.updatedFields);
+                }
             }
 
         });
@@ -131,10 +134,12 @@ server.on("connection", function (socket: Socket) {
             altitudeAccuracy: altitudeAccuracy,
             heading: heading,
             speed: speed,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            expireAt: new Date(Date.now() + (1000 * 60 * 60 * 24 * 30))
         };
 
         try {
+            db.beep().collection("location").createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
             db.beep().collection("location").insertOne(dataToInsert);
         } 
         catch (error) {
