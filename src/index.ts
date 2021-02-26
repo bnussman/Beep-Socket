@@ -42,10 +42,11 @@ server.on("connection", function (socket: Socket) {
             socket.removeAllListeners();
         });
 
-        const filter2 = [{ $match: {'fullDocument.user': userid } }];
-        const stream2 = db.beep().collection('queue-entry').watch(filter2, { fullDocument: 'updateLookup' });
+        const filter2 = [{ $match: {'fullDocument.user': new ObjectId(beepersID) } }];
+        const stream2 = db.beep().collection('location').watch(filter2, { fullDocument: 'updateLookup' });
 
         stream2.on("change", (changeEvent) => {
+            console.log("Sending Location Update to Rider:", changeEvent);
             //@ts-ignore
             server.to(socket.id).emit("hereIsBeepersLocation", changeEvent.fullDocument);
 
