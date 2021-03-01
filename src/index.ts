@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
 import * as Sentry from "@sentry/node";
-import { isTokenValid, formulateUserUpdateData } from "./utils/helpers";
+import { isTokenValid } from "./utils/helpers";
 import { makeJSONError } from "./utils/json";
 import { initializeSentry } from "./utils/sentry";
 import db from "./utils/db";
-import {ObjectId} from "mongodb";
+import { ObjectId } from "mongodb";
 
 const server = new Server();
 
@@ -86,6 +86,33 @@ server.on("connection", function (socket: Socket) {
     socket.on('getUser', async function (authToken: string) {
 
         const userid = await isTokenValid(authToken);
+
+        db.beep().collection('user').findOne(
+            { _id: userid },
+            { projection: {
+                _id: false,
+                first: true,
+                last: true,
+                email: true,
+                phone: true,
+                venmo: true,
+                isBeeping: true,
+                isEmailVerified: true,
+                isStudent: true,
+                masksRequired: true,
+                groupSize: true,
+                singlesRate: true,
+                groupRate: true,
+                photoUrl: true,
+                username: true
+            }},
+            function(err, result) {
+                console.log(result);
+                server.to(socket.id).emit('updateUser', result);
+            }
+        );
+
+
 
         if (!userid) {
             server.to(socket.id).emit('updateUser', makeJSONError("Your token is not valid."));
