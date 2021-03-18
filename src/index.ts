@@ -28,8 +28,9 @@ server.on("connection", function (socket: Socket) {
 
         let locationCursor: Cursor | null;
 
-        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table("queues").filter({ beeperid: beepersID, riderid: userid }).changes({ includeInitial: false }).run((await database.getConn()), function(error: Error, cursor: Cursor) {
             if (error) {
+                console.error(error);
                 Sentry.captureException(error);
             }
            
@@ -48,7 +49,7 @@ server.on("connection", function (socket: Socket) {
             });
         });
 
-        r.table(beepersID).changes({ includeInitial: false }).run((await database.getConnLocations()), async function(error: Error, cursor: Cursor) {
+        r.table("locations").filter({ user: beepersID }).changes({ includeInitial: false }).run((await database.getConn()), async function(error: Error, cursor: Cursor) {
             if (error) {
                 Sentry.captureException(error);
                 console.log(error);
@@ -68,8 +69,9 @@ server.on("connection", function (socket: Socket) {
     });
 
     socket.on('getQueue', async function (userid: string) {
-        r.table(userid).changes({ includeInitial: false, squash: true }).run((await database.getConnQueues()), function(error: Error, cursor: Cursor) {
+        r.table("queues").filter({ beeperid: userid }).changes({ includeInitial: false, squash: true }).run((await database.getConn()), function(error: Error, cursor: Cursor) {
             if (error) {
+                console.error(error);
                 Sentry.captureException(error);
             }
 
@@ -100,6 +102,7 @@ server.on("connection", function (socket: Socket) {
         //@ts-ignore
         r.table("users").get(userid).changes({ includeInitial: true, squash: true }).run((await database.getConn()), function(error: Error, cursor: any) {
             if (error) {
+                console.error(error);
                 Sentry.captureException(error);
             }
 
@@ -127,6 +130,7 @@ server.on("connection", function (socket: Socket) {
         }
 
         const dataToInsert = {
+            user: userid,
             latitude: latitude,
             longitude: longitude,
             altitude: altitude,
@@ -138,7 +142,7 @@ server.on("connection", function (socket: Socket) {
         };
 
         try {
-            const result: r.WriteResult = await r.table(userid).insert(dataToInsert).run((await database.getConnLocations()));
+            const result: r.WriteResult = await r.table("locations").insert(dataToInsert).run((await database.getConn()));
             if (result.inserted > 0) {
                 console.log("Beeper", userid, "inserted a location update!");
             }
