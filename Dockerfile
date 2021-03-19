@@ -4,7 +4,7 @@ WORKDIR /usr/beep-socket
 
 COPY package.json .
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
