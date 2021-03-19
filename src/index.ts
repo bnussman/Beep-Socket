@@ -170,6 +170,11 @@ server.on("connection", function (socket: Socket) {
                 server.to(socket.id).emit('data', data);
             });
 
+            socket.on('stopLocations', function stop() {
+                cursor.close();
+                socket.removeListener("stopLocations", stop);
+            });
+
             socket.on("disconnect", () => {
                 cursor.close();
             });
