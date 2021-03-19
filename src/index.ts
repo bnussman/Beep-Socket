@@ -152,6 +152,29 @@ server.on("connection", function (socket: Socket) {
             console.log(error);
         }
     });
+
+    socket.on('getLocations', async function (authToken: string) {
+        const userid = await isTokenValid(authToken);
+
+        if (!userid) {
+            return console.log("Token is not valid.");
+        }
+
+        r.table("locations").changes({ includeInitial: false }).run((await database.getConn()), async function(error: Error, cursor: Cursor) {
+            if (error) {
+                Sentry.captureException(error);
+                console.log(error);
+            }
+
+            cursor.on("data", async function(data) {
+                server.to(socket.id).emit('data', data);
+            });
+
+            socket.on("disconnect", () => {
+                cursor.close();
+            });
+        });
+    });
 });
 
 database.connect(() => {

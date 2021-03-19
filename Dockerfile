@@ -1,10 +1,10 @@
-FROM node:latest
+FROM node:current-alpine
 
 WORKDIR /usr/beep-socket
 
 COPY package.json .
 
-RUN npm install && npm install typescript -g
+RUN npm ci
 
 COPY . .
 
